@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DeterministicFSM extends FSM {
     private final Logger logger = new Logger();
@@ -108,11 +109,30 @@ public class DeterministicFSM extends FSM {
                     if (tokens.length >= 2) enableLogging(tokens[1]); else disableLogging();
                 }
                 case "SYMBOLS" -> {
-                    if (tokens.length >= 2) {
-                        List<Character> list = new ArrayList<>();
-                        for (int i=1;i<tokens.length;i++) for (char c:tokens[i].toCharArray()) list.add(c);
-                        addSymbols(list);
-                    } else System.out.println(getSymbols());
+                    if (tokens.length > 1) {
+                        List<String> invalids = new ArrayList<>();
+                        for (int i = 1; i < tokens.length; i++) {
+                            String tok = tokens[i];
+                            if (tok.length() != 1 || !Character.isLetterOrDigit(tok.charAt(0))) {
+                                invalids.add(tok);
+                            } else {
+                                char c = Character.toUpperCase(tok.charAt(0));
+                                if (symbols.contains(c)) {
+                                    System.out.println("Warning " + tok + " was already declared as a symbol");
+                                } else {
+                                    symbols.add(c);
+                                }
+                            }
+                        }
+                        if (!invalids.isEmpty()) {
+                            System.out.println("Warning: invalid symbols " + String.join(", ", invalids));
+                        }
+                    } else {
+                        String list = symbols.stream()
+                                .map(String::valueOf)
+                                .collect(Collectors.joining(", "));
+                        System.out.println(list);
+                    }
                 }
                 case "STATES" -> {
                     if (tokens.length>=2) addStates(Arrays.asList(Arrays.copyOfRange(tokens,1,tokens.length)));
