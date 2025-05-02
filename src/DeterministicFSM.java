@@ -135,15 +135,56 @@ public class DeterministicFSM extends FSM {
                     }
                 }
                 case "STATES" -> {
-                    if (tokens.length>=2) addStates(Arrays.asList(Arrays.copyOfRange(tokens,1,tokens.length)));
-                    else System.out.println(getStates().stream().map(State::getName).toList());
+                    if (tokens.length > 1) {
+                        for (int i = 1; i < tokens.length; i++) {
+                            String name = tokens[i].replaceAll(";+$", "");
+                            boolean exists = states.stream()
+                                    .anyMatch(s -> s.getName().equalsIgnoreCase(name));
+                            if (exists) {
+                                System.out.println("Warning: " + name.toUpperCase() + " was already declared as a state");
+                            } else {
+                                // uses your existing addStates logic
+                                addStates(Collections.singletonList(name));
+                            }
+                        }
+                    } else {
+                        String list = states.stream()
+                                .map(State::getName)
+                                .collect(Collectors.joining(", "));
+                        System.out.println(list);
+                    }
                 }
+
                 case "INITIAL-STATE" -> {
-                    if(tokens.length>=2) setInitialState(tokens[1]); else System.out.println("Error: INITIAL-STATE requires a state name");
+                    if (tokens.length >= 2) {
+                        String name = tokens[1].replaceAll(";+$", "");
+                        boolean existed = states.stream()
+                                .anyMatch(s -> s.getName().equalsIgnoreCase(name));
+                        if (!existed) {
+                            System.out.println("Warning: " + name.toUpperCase() + " was not previously declared as a state");
+                        }
+                        setInitialState(name);
+                    } else {
+                        System.out.println("Error: INITIAL-STATE requires a state name");
+                    }
                 }
+
                 case "FINAL-STATES" -> {
-                    if(tokens.length>=2) addFinalStates(Arrays.asList(Arrays.copyOfRange(tokens,1,tokens.length)));
-                    else System.out.println("Error: FINAL-STATES requires at least one state");
+                    if (tokens.length >= 2) {
+                        List<String> names = new ArrayList<>();
+                        for (int i = 1; i < tokens.length; i++) {
+                            String name = tokens[i].replaceAll(";+$", "");
+                            boolean existed = states.stream()
+                                    .anyMatch(s -> s.getName().equalsIgnoreCase(name));
+                            if (!existed) {
+                                System.out.println("Warning: " + name.toUpperCase() + " was not previously declared as a state");
+                            }
+                            names.add(name);
+                        }
+                        addFinalStates(names);
+                    } else {
+                        System.out.println("Error: FINAL-STATES requires at least one state");
+                    }
                 }
                 case "TRANSITIONS" -> {
                     String body = command.substring(cmd.length()).trim();
