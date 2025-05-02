@@ -20,6 +20,22 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         StringBuilder cmdBuffer = new StringBuilder();
         System.out.print("? ");
-    }
 
+        while (scanner.hasNextLine()) {
+            String line = scanner.nextLine();
+            String beforeSemicolon = line.split(";", 2)[0];
+            if (line.contains(";")) {
+                cmdBuffer.append(" ").append(beforeSemicolon.trim());
+                String command = cmdBuffer.toString().trim();
+                cmdBuffer.setLength(0);
+                if (!command.isEmpty()) {
+                    processor.processCommand(command, 0);
+                }
+                System.out.print("? ");
+            } else {
+                cmdBuffer.append(" ").append(beforeSemicolon.trim());
+            }
+        }
+        scanner.close();
+    }
 }
