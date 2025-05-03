@@ -106,8 +106,19 @@ public class DeterministicFSM extends FSM {
         try {
             switch (cmd) {
                 case "LOG" -> {
-                    if (tokens.length >= 2) enableLogging(tokens[1]); else disableLogging();
+                    if (tokens.length >= 2) {
+                        enableLogging(tokens[1]);
+                    } else {
+                        if (logger.isEnabled()) {
+                            disableLogging();
+                            printAndLog("STOPPED LOGGING");
+
+                        } else {
+                            printAndLog("LOGGING was not enabled");
+                        }
+                    }
                 }
+
                 case "SYMBOLS" -> {
                     if (tokens.length > 1) {
                         List<String> invalids = new ArrayList<>();
@@ -118,20 +129,21 @@ public class DeterministicFSM extends FSM {
                             } else {
                                 char c = Character.toUpperCase(tok.charAt(0));
                                 if (symbols.contains(c)) {
-                                    System.out.println("Warning " + tok + " was already declared as a symbol");
+                                    printAndLog("Warning " + tok + " was already declared as a symbol");
                                 } else {
                                     symbols.add(c);
                                 }
                             }
                         }
                         if (!invalids.isEmpty()) {
-                            System.out.println("Warning: invalid symbols " + String.join(", ", invalids));
+                            printAndLog("Warning: invalid symbols " + String.join(", ", invalids));
+
                         }
                     } else {
                         String list = symbols.stream()
                                 .map(String::valueOf)
                                 .collect(Collectors.joining(", "));
-                        System.out.println(list);
+                        printAndLog(list);
                     }
                 }
                 case "STATES" -> {
@@ -141,7 +153,7 @@ public class DeterministicFSM extends FSM {
                             boolean exists = states.stream()
                                     .anyMatch(s -> s.getName().equalsIgnoreCase(name));
                             if (exists) {
-                                System.out.println("Warning: " + name.toUpperCase() + " was already declared as a state");
+                                printAndLog("Warning: " + name.toUpperCase() + " was already declared as a state");
                             } else {
                                 // uses your existing addStates logic
                                 addStates(Collections.singletonList(name));
@@ -151,7 +163,7 @@ public class DeterministicFSM extends FSM {
                         String list = states.stream()
                                 .map(State::getName)
                                 .collect(Collectors.joining(", "));
-                        System.out.println(list);
+                        printAndLog(list);
                     }
                 }
 
@@ -161,11 +173,11 @@ public class DeterministicFSM extends FSM {
                         boolean existed = states.stream()
                                 .anyMatch(s -> s.getName().equalsIgnoreCase(name));
                         if (!existed) {
-                            System.out.println("Warning: " + name.toUpperCase() + " was not previously declared as a state");
+                            printAndLog("Warning: " + name.toUpperCase() + " was not previously declared as a state");
                         }
                         setInitialState(name);
                     } else {
-                        System.out.println("Error: INITIAL-STATE requires a state name");
+                        printAndLog("Error: INITIAL-STATE requires a state name");
                     }
                 }
 
@@ -177,13 +189,13 @@ public class DeterministicFSM extends FSM {
                             boolean existed = states.stream()
                                     .anyMatch(s -> s.getName().equalsIgnoreCase(name));
                             if (!existed) {
-                                System.out.println("Warning: " + name.toUpperCase() + " was not previously declared as a state");
+                                printAndLog("Warning: " + name.toUpperCase() + " was not previously declared as a state");
                             }
                             names.add(name);
                         }
                         addFinalStates(names);
                     } else {
-                        System.out.println("Error: FINAL-STATES requires at least one state");
+                        printAndLog("Error: FINAL-STATES requires at least one state");
                     }
                 }
                 case "TRANSITIONS" -> {
@@ -192,29 +204,33 @@ public class DeterministicFSM extends FSM {
                     List<Transition> list = new ArrayList<>();
                     for(String p:parts) {
                         String[] e = p.trim().split("\\s+");
-                        if(e.length<3) System.out.println("Line " + lineNum + ": invalid transition \""+p.trim()+"\"");
+                        if(e.length<3) printAndLog("Line " + lineNum + ": invalid transition \""+p.trim()+"\"");
                         else list.add(new ConcreteTransition(e[0].charAt(0), new ConcreteState(e[1]), new ConcreteState(e[2])));
                     }
                     addTransitions(list);
                 }
                 case "PRINT" -> printConfiguration();
                 case "EXECUTE" -> {
-                    if(tokens.length>=2) System.out.println(execute(tokens[1]));
-                    else System.out.println("Error: EXECUTE requires an input string");
+                    if(tokens.length>=2) printAndLog(execute(tokens[1]));
+                    else printAndLog("Error: EXECUTE requires an input string");
                 }
                 case "COMPILE" -> {
-                    if(tokens.length>=2) compile(tokens[1]); else System.out.println("Error: COMPILE requires a filename");
+                    if(tokens.length>=2) compile(tokens[1]); else printAndLog("Error: COMPILE requires a filename");
                 }
                 case "CLEAR" -> { symbols.clear(); states.clear(); transitions.clear(); finalStates.clear(); initialState=null; }
                 case "LOAD" -> {
-                    if(tokens.length>=2) load(tokens[1]); else System.out.println("Error: LOAD requires a filename");
+                    if(tokens.length>=2) load(tokens[1]); else printAndLog("Error: LOAD requires a filename");
                 }
-                case "EXIT" -> { disableLogging(); System.out.println("TERMINATED BY USER"); System.exit(0); }
-                default -> System.out.println("Line " + lineNum + ": invalid command \"" + cmd + "\"");
+                case "EXIT" -> { disableLogging(); printAndLog("TERMINATED BY USER"); System.exit(0); }
+                default -> printAndLog("Line " + lineNum + ": invalid command \"" + cmd + "\"");
             }
         } catch(Exception e) {
-            System.out.println("Line " + lineNum + ": " + e.getMessage());
+            printAndLog("Line " + lineNum + ": " + e.getMessage());
         }
+    }
+    private void printAndLog(String message) {
+        System.out.println(message);
+        logger.log(message);
     }
 
     @Override
