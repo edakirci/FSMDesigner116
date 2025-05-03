@@ -1,7 +1,7 @@
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-
+import java.util.Locale;
 public class Main {
     public static void main(String[] args) {
         DeterministicFSM fsm = new DeterministicFSM();
@@ -12,10 +12,10 @@ public class Main {
             return;
         }
 
-        String versionNo = "1.0";
+        String versionNo = VersionUtil.getVersion();
         LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMMM d, yyyy, HH:mm");
-        System.out.println("FSM DESIGNER " + versionNo + " " + fmt.format(now));
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMMM d, yyyy, HH:mm", Locale.ENGLISH);
+        System.out.println("FSM DESIGNER " + versionNo +" "+ fmt.format(now));
 
         Scanner scanner = new Scanner(System.in);
         StringBuilder cmdBuffer = new StringBuilder();
@@ -23,6 +23,11 @@ public class Main {
 
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
+
+            if (line.trim().startsWith(";")) {
+                System.out.print("? ");
+                continue;
+            }
             String beforeSemicolon = line.split(";", 2)[0];
             if (line.contains(";")) {
                 cmdBuffer.append(" ").append(beforeSemicolon.trim());
