@@ -250,4 +250,28 @@ public class DeterministicFSM extends FSM {
         sb.append(finalStates.contains(current)?" YES":" NO");
         return sb.toString();
     }
+    @Override
+    public void load(String filename) {
+        try {
+            if (filename.toLowerCase().endsWith(".bin") || filename.toLowerCase().endsWith(".fsm")) {
+                FSM loaded = new FileManager().loadFromBinary(filename);
+                if (loaded instanceof DeterministicFSM d) {
+                    this.states = d.states;
+                    this.symbols = d.symbols;
+                    this.initialState = d.initialState;
+                    this.finalStates = d.finalStates;
+                    this.transitions = d.transitions;
+                    printAndLog("FSM loaded successfully from binary file: " + filename);
+                } else {
+                    printAndLog("Error: Binary file does not contain a valid DeterministicFSM.");
+                }
+            } else {
+                new FileManager().loadFromText(this, filename);
+                printAndLog("Commands loaded successfully from text file: " + filename);
+            }
+        } catch (Exception e) {
+            printAndLog("Error loading file " + filename + ": " + e.getMessage());
+        }
+    }
+
 }
