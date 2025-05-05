@@ -18,6 +18,7 @@ public class DeterministicFSM extends FSM {
             if (Character.isLetterOrDigit(u)) symbols.add(u);
         }
     }
+
     @Override
     public Set<Character> getSymbols() { return symbols; }
 
@@ -31,51 +32,71 @@ public class DeterministicFSM extends FSM {
             }
         }
     }
+
     @Override
     public List<State> getStates() { return states; }
 
     @Override
     public void setInitialState(String stateName) {
-        State st = states.stream().filter(s -> s.getName().equalsIgnoreCase(stateName)).findFirst().orElse(null);
+        State st = states.stream()
+                .filter(s -> s.getName().equalsIgnoreCase(stateName))
+                .findFirst()
+                .orElse(null);
         if (st == null) {
             st = new ConcreteState(stateName);
             states.add(st);
         }
         initialState = st;
     }
+
     @Override
     public State getInitialState() { return initialState; }
 
     @Override
     public void addFinalStates(Collection<String> stateNames) {
         for (String s : stateNames) {
-            State st = states.stream().filter(x -> x.getName().equalsIgnoreCase(s)).findFirst().orElse(null);
-            if (st == null) { st = new ConcreteState(s); states.add(st); }
+            State st = states.stream()
+                    .filter(x -> x.getName().equalsIgnoreCase(s))
+                    .findFirst()
+                    .orElse(null);
+            if (st == null) {
+                st = new ConcreteState(s);
+                states.add(st);
+            }
             finalStates.add(st);
         }
     }
+
     @Override
     public Set<State> getFinalStates() { return finalStates; }
 
     @Override
     public void addTransitions(Collection<Transition> transitionsToAdd) {
         for (Transition t : transitionsToAdd) {
-            transitions.removeIf(existing -> existing.getSymbol() == t.getSymbol() && existing.getCurrentState().equals(t.getCurrentState()));
+            transitions.removeIf(existing ->
+                    existing.getSymbol() == t.getSymbol() &&
+                            existing.getCurrentState().equals(t.getCurrentState()));
             transitions.add(t);
         }
     }
+
     @Override
     public List<Transition> getTransitions() { return transitions; }
 
     @Override
     public void printConfiguration() {
         System.out.println("SYMBOLS " + symbols);
-        System.out.println("STATES " + states.stream().map(State::getName).toList());
+        System.out.println("STATES " + states.stream()
+                .map(State::getName)
+                .collect(Collectors.toList()));
         System.out.println("INITIAL STATE " + (initialState != null ? initialState.getName() : ""));
-        System.out.println("FINAL STATES " + finalStates.stream().map(State::getName).toList());
+        System.out.println("FINAL STATES " + finalStates.stream()
+                .map(State::getName)
+                .collect(Collectors.toList()));
         System.out.println("TRANSITIONS");
         for (Transition t : transitions) {
-            System.out.println(t.getSymbol() + " " + t.getCurrentState().getName() + " " + t.getNextState().getName());
+            System.out.println(t.getSymbol() + " " + t.getCurrentState().getName()
+                    + " " + t.getNextState().getName());
         }
     }
 
@@ -86,14 +107,39 @@ public class DeterministicFSM extends FSM {
 
     @Override
     public void load(String filename) {
-        new FileManager().loadFromText(this, filename);
+        try {
+            if (filename.toLowerCase().endsWith(".bin") || filename.toLowerCase().endsWith(".fsm")) {
+                FSM loaded = new FileManager().loadFromBinary(filename);
+                if (loaded instanceof DeterministicFSM) {
+                    DeterministicFSM d = (DeterministicFSM) loaded;
+                    this.states = d.states;
+                    this.symbols = d.symbols;
+                    this.initialState = d.initialState;
+                    this.finalStates = d.finalStates;
+                    this.transitions = d.transitions;
+                    printAndLog("FSM loaded successfully from binary file: " + filename);
+                } else {
+                    printAndLog("Error: Binary file does not contain a valid DeterministicFSM.");
+                }
+            } else {
+                new FileManager().loadFromText(this, filename);
+                printAndLog("Commands loaded successfully from text file: " + filename);
+            }
+        } catch (Exception e) {
+            printAndLog("Error loading file " + filename + ": " + e.getMessage());
+        }
     }
 
-    public void enableLogging(String filename) { logger.startLogging(filename); }
-    public void disableLogging()             { logger.stopLogging();       }
+    public void enableLogging(String filename) {
+        logger.startLogging(filename);
+    }
+
+    public void disableLogging() {
+        logger.stopLogging();
+    }
 
     public void processRawCommand(String command, int lineNum) {
-        String response = ""; // optional: capture response
+        String response = "";
         executeCommand(command, lineNum);
         logger.log(command);
         if (!response.isEmpty()) logger.log(response);
@@ -103,22 +149,20 @@ public class DeterministicFSM extends FSM {
         String[] tokens = command.trim().split("\\s+");
         if (tokens.length == 0) return;
         String cmd = tokens[0].toUpperCase();
+
         try {
             switch (cmd) {
                 case "LOG" -> {
-                    if (tokens.length >= 2) {
-                        enableLogging(tokens[1]);
-                    } else {
+                    if (tokens.length >= 2) enableLogging(tokens[1]);
+                    else {
                         if (logger.isEnabled()) {
                             disableLogging();
                             printAndLog("STOPPED LOGGING");
-
                         } else {
                             printAndLog("LOGGING was not enabled");
                         }
                     }
                 }
-
                 case "SYMBOLS" -> {
                     if (tokens.length > 1) {
                         List<String> invalids = new ArrayList<>();
@@ -137,7 +181,6 @@ public class DeterministicFSM extends FSM {
                         }
                         if (!invalids.isEmpty()) {
                             printAndLog("Warning: invalid symbols " + String.join(", ", invalids));
-
                         }
                     } else {
                         String list = symbols.stream()
@@ -155,7 +198,6 @@ public class DeterministicFSM extends FSM {
                             if (exists) {
                                 printAndLog("Warning: " + name.toUpperCase() + " was already declared as a state");
                             } else {
-                                // uses your existing addStates logic
                                 addStates(Collections.singletonList(name));
                             }
                         }
@@ -166,7 +208,6 @@ public class DeterministicFSM extends FSM {
                         printAndLog(list);
                     }
                 }
-
                 case "INITIAL-STATE" -> {
                     if (tokens.length >= 2) {
                         String name = tokens[1].replaceAll(";+$", "");
@@ -180,7 +221,6 @@ public class DeterministicFSM extends FSM {
                         printAndLog("Error: INITIAL-STATE requires a state name");
                     }
                 }
-
                 case "FINAL-STATES" -> {
                     if (tokens.length >= 2) {
                         List<String> names = new ArrayList<>();
@@ -202,32 +242,54 @@ public class DeterministicFSM extends FSM {
                     String body = command.substring(cmd.length()).trim();
                     String[] parts = body.split(",");
                     List<Transition> list = new ArrayList<>();
-                    for(String p:parts) {
+                    for (String p : parts) {
                         String[] e = p.trim().split("\\s+");
-                        if(e.length<3) printAndLog("Line " + lineNum + ": invalid transition \""+p.trim()+"\"");
-                        else list.add(new ConcreteTransition(e[0].charAt(0), new ConcreteState(e[1]), new ConcreteState(e[2])));
+                        if (e.length < 3)
+                            printAndLog("Line " + lineNum + ": invalid transition \"" + p.trim() + "\"");
+                        else
+                            list.add(new ConcreteTransition(e[0].charAt(0),
+                                    new ConcreteState(e[1]), new ConcreteState(e[2])));
                     }
                     addTransitions(list);
                 }
                 case "PRINT" -> printConfiguration();
                 case "EXECUTE" -> {
-                    if(tokens.length>=2) printAndLog(execute(tokens[1]));
-                    else printAndLog("Error: EXECUTE requires an input string");
+                    if (tokens.length >= 2)
+                        printAndLog(execute(tokens[1]));
+                    else
+                        printAndLog("Error: EXECUTE requires an input string");
                 }
                 case "COMPILE" -> {
-                    if(tokens.length>=2) compile(tokens[1]); else printAndLog("Error: COMPILE requires a filename");
+                    if (tokens.length >= 2)
+                        compile(tokens[1]);
+                    else
+                        printAndLog("Error: COMPILE requires a filename");
                 }
-                case "CLEAR" -> { symbols.clear(); states.clear(); transitions.clear(); finalStates.clear(); initialState=null; }
+                case "CLEAR" -> {
+                    symbols.clear();
+                    states.clear();
+                    transitions.clear();
+                    finalStates.clear();
+                    initialState = null;
+                }
                 case "LOAD" -> {
-                    if(tokens.length>=2) load(tokens[1]); else printAndLog("Error: LOAD requires a filename");
+                    if (tokens.length >= 2)
+                        load(tokens[1]);
+                    else
+                        printAndLog("Error: LOAD requires a filename");
                 }
-                case "EXIT" -> { disableLogging(); printAndLog("TERMINATED BY USER"); System.exit(0); }
+                case "EXIT" -> {
+                    disableLogging();
+                    printAndLog("TERMINATED BY USER");
+                    System.exit(0);
+                }
                 default -> printAndLog("Line " + lineNum + ": invalid command \"" + cmd + "\"");
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             printAndLog("Line " + lineNum + ": " + e.getMessage());
         }
     }
+
     private void printAndLog(String message) {
         System.out.println(message);
         logger.log(message);
@@ -238,40 +300,22 @@ public class DeterministicFSM extends FSM {
         StringBuilder sb = new StringBuilder();
         State current = initialState;
         sb.append(current.getName());
-        for(char c: input.toCharArray()) {
+        for (char c : input.toCharArray()) {
             char u = Character.toUpperCase(c);
-            if(!symbols.contains(u)) return "Error: invalid symbol " + c;
-            Transition found=null;
-            for(Transition t:transitions) if(t.getSymbol()==u && t.getCurrentState().equals(current)) { found=t; break; }
-            if(found==null) return "Error: no transition for " + c + " in state " + current.getName();
+            if (!symbols.contains(u))
+                return "Error: invalid symbol " + c;
+            Transition found = null;
+            for (Transition t : transitions)
+                if (t.getSymbol() == u && t.getCurrentState().equals(current)) {
+                    found = t;
+                    break;
+                }
+            if (found == null)
+                return "Error: no transition for " + c + " in state " + current.getName();
             current = found.getNextState();
             sb.append(" ").append(current.getName());
         }
-        sb.append(finalStates.contains(current)?" YES":" NO");
+        sb.append(finalStates.contains(current) ? " YES" : " NO");
         return sb.toString();
     }
-    @Override
-    public void load(String filename) {
-        try {
-            if (filename.toLowerCase().endsWith(".bin") || filename.toLowerCase().endsWith(".fsm")) {
-                FSM loaded = new FileManager().loadFromBinary(filename);
-                if (loaded instanceof DeterministicFSM d) {
-                    this.states = d.states;
-                    this.symbols = d.symbols;
-                    this.initialState = d.initialState;
-                    this.finalStates = d.finalStates;
-                    this.transitions = d.transitions;
-                    printAndLog("FSM loaded successfully from binary file: " + filename);
-                } else {
-                    printAndLog("Error: Binary file does not contain a valid DeterministicFSM.");
-                }
-            } else {
-                new FileManager().loadFromText(this, filename);
-                printAndLog("Commands loaded successfully from text file: " + filename);
-            }
-        } catch (Exception e) {
-            printAndLog("Error loading file " + filename + ": " + e.getMessage());
-        }
-    }
-
 }
