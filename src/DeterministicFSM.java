@@ -1,5 +1,6 @@
 import java.util.*;
 import java.util.stream.Collectors;
+import java.io.*;
 
 public class DeterministicFSM extends FSM {
     private final Logger logger = new Logger();
@@ -252,7 +253,32 @@ public class DeterministicFSM extends FSM {
                     }
                     addTransitions(list);
                 }
-                case "PRINT" -> printConfiguration();
+                case "PRINT" -> {
+                    if (tokens.length >= 2) {
+                        String filename = tokens[1].replaceAll(";+$", "");
+                        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+                            writer.println("SYMBOLS " + symbols);
+                            writer.println("STATES " + states.stream()
+                                    .map(State::getName)
+                                    .collect(Collectors.toList()));
+                            writer.println("INITIAL STATE " + (initialState != null ? initialState.getName() : ""));
+                            writer.println("FINAL STATES " + finalStates.stream()
+                                    .map(State::getName)
+                                    .collect(Collectors.toList()));
+                            writer.println("TRANSITIONS");
+                            for (Transition t : transitions) {
+                                writer.println(t.getSymbol() + " " +
+                                        t.getCurrentState().getName() + " " +
+                                        t.getNextState().getName());
+                            }
+                            printAndLog("FSM configuration written to file: " + filename);
+                        } catch (IOException e) {
+                            printAndLog("Error: cannot create or override file " + filename + " - " + e.getMessage());
+                        }
+                    } else {
+                        printConfiguration();
+                    }
+                }
                 case "EXECUTE" -> {
                     if (tokens.length >= 2)
                         printAndLog(execute(tokens[1]));
