@@ -5,16 +5,26 @@ public class FileManager {
             String line;
             int lineNum = 0;
             StringBuilder cmdBuf = new StringBuilder();
+
             while ((line = br.readLine()) != null) {
                 lineNum++;
-                String before = line.split(";", 2)[0];
-                if (line.contains(";")) {
-                    cmdBuf.append(" ").append(before.trim());
+
+                int idx = line.indexOf(';');
+                String content = (idx >= 0 ? line.substring(0, idx) : line).trim();
+
+
+                if (content.isEmpty()) {
+                    continue;
+                }
+
+                cmdBuf.append(' ').append(content);
+
+                if (idx >= 0) {
                     String cmd = cmdBuf.toString().trim();
                     cmdBuf.setLength(0);
-                    if (!cmd.isEmpty()) fsm.processRawCommand(cmd, lineNum);
-                } else {
-                    cmdBuf.append(" ").append(before.trim());
+                    if (!cmd.isEmpty()) {
+                        fsm.processRawCommand(cmd, lineNum);
+                    }
                 }
             }
         } catch (IOException e) {

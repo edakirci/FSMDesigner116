@@ -2,6 +2,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import java.util.Locale;
+
 public class Main {
     public static void main(String[] args) {
         DeterministicFSM fsm = new DeterministicFSM();
@@ -14,33 +15,39 @@ public class Main {
 
         String versionNo = VersionUtil.getVersion();
         LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMMM d, yyyy, HH:mm", Locale.ENGLISH);
-        System.out.println("FSM DESIGNER " + versionNo +" "+ fmt.format(now));
+        DateTimeFormatter fmt = DateTimeFormatter
+                .ofPattern("MMMM d, yyyy, HH:mm", Locale.ENGLISH);
+        System.out.println("FSM DESIGNER " + versionNo + " " + fmt.format(now));
 
         Scanner scanner = new Scanner(System.in);
         StringBuilder cmdBuffer = new StringBuilder();
-        System.out.print("? ");
+        String prompt = "? ";
+        System.out.print(prompt);
 
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
 
-            if (line.trim().startsWith(";")) {
-                System.out.print("? ");
+            int idx = line.indexOf(';');
+            String content = (idx >= 0 ? line.substring(0, idx) : line).trim();
+
+
+            if (content.isEmpty()) {
+                System.out.print(prompt);
                 continue;
             }
-            String beforeSemicolon = line.split(";", 2)[0];
-            if (line.contains(";")) {
-                cmdBuffer.append(" ").append(beforeSemicolon.trim());
+
+            cmdBuffer.append(' ').append(content);
+
+            if (idx >= 0) {
                 String command = cmdBuffer.toString().trim();
                 cmdBuffer.setLength(0);
                 if (!command.isEmpty()) {
                     processor.processCommand(command, 0);
                 }
-                System.out.print("? ");
-            } else {
-                cmdBuffer.append(" ").append(beforeSemicolon.trim());
+                System.out.print(prompt);
             }
         }
+
         scanner.close();
     }
 }
