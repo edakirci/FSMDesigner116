@@ -240,19 +240,62 @@ public class DeterministicFSM extends FSM {
                     }
                 }
                 case "TRANSITIONS" -> {
-                    String body = command.substring(cmd.length()).trim();
+                    String body = command.substring("TRANSITIONS".length()).trim();
                     String[] parts = body.split(",");
                     List<Transition> list = new ArrayList<>();
+
                     for (String p : parts) {
                         String[] e = p.trim().split("\\s+");
-                        if (e.length < 3)
-                            printAndLog("Line " + lineNum + ": invalid transition \"" + p.trim() + "\"");
-                        else
-                            list.add(new ConcreteTransition(e[0].charAt(0),
-                                    new ConcreteState(e[1]), new ConcreteState(e[2])));
+
+                        boolean hasError = false;
+
+                        if (e.length < 3) {
+                            printAndLog("Line " + lineNum + ": invalid transition format → \"" + p.trim() + "\"");
+                            continue;
+                        }
+
+                        char symbol = Character.toUpperCase(e[0].charAt(0));
+                        String currentStateName = e[1];
+                        String nextStateName = e[2];
+
+                        if (!symbols.contains(symbol)) {
+                            printAndLog("Error: invalid symbol " + symbol);
+                            hasError = true;
+                        }
+
+                        State currentState = states.stream()
+                                .filter(s -> s.getName().equalsIgnoreCase(currentStateName))
+                                .findFirst()
+                                .orElse(null);
+                        if (currentState == null) {
+                            printAndLog("Error: invalid state " + currentStateName);
+                            hasError = true;
+                        }
+
+                        State nextState = states.stream()
+                                .filter(s -> s.getName().equalsIgnoreCase(nextStateName))
+                                .findFirst()
+                                .orElse(null);
+                        if (nextState == null) {
+                            printAndLog("Error: invalid state " + nextStateName);
+                            hasError = true;
+                        }
+
+                        boolean alreadyExists = transitions.stream().anyMatch(t ->
+                                t.getSymbol() == symbol && t.getCurrentState().equals(currentState) &&
+                                        !t.getNextState().equals(nextState));
+                        if (!hasError && alreadyExists) {
+                            printAndLog("Warning: transition already exists for <" + symbol + "," + currentStateName + ">, overridden.");
+                        }
+
+                        if (!hasError && currentState != null && nextState != null) {
+                            list.add(new ConcreteTransition(symbol, currentState, nextState));
+                        }
                     }
+
                     addTransitions(list);
                 }
+
                 case "PRINT" -> {
                     if (tokens.length >= 2) {
                         String filename = tokens[1].replaceAll(";+$", "");
