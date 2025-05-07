@@ -86,19 +86,33 @@ public class DeterministicFSM extends FSM {
 
     @Override
     public void printConfiguration() {
-        System.out.println("SYMBOLS " + symbols);
-        System.out.println("STATES " + states.stream()
+        System.out.println("SYMBOLS [" + symbols.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(", ")) + "]");
+
+        List<State> sortedStates = states.stream()
+                .sorted(Comparator.comparing(State::getName))
+                .collect(Collectors.toList());
+        System.out.println("STATES [" + sortedStates.stream()
                 .map(State::getName)
-                .collect(Collectors.toList()));
+                .collect(Collectors.joining(", ")) + "]");
+
         System.out.println("INITIAL STATE " + (initialState != null ? initialState.getName() : ""));
-        System.out.println("FINAL STATES " + finalStates.stream()
+
+
+        System.out.println("FINAL STATES [" + finalStates.stream()
                 .map(State::getName)
-                .collect(Collectors.toList()));
+                .collect(Collectors.joining(", ")) + "]");
+
+        List<Transition> sortedTransitions = transitions.stream()
+                .sorted(Comparator.comparing((Transition t) -> t.getSymbol())
+                        .thenComparing(t -> t.getCurrentState().getName()))
+                .collect(Collectors.toList());
         System.out.println("TRANSITIONS");
-        for (Transition t : transitions) {
+        sortedTransitions.forEach(t -> {
             System.out.println(t.getSymbol() + " " + t.getCurrentState().getName()
                     + " " + t.getNextState().getName());
-        }
+        });
     }
 
     @Override
@@ -240,7 +254,7 @@ public class DeterministicFSM extends FSM {
                     }
                 }
                 case "TRANSITIONS" -> {
-                    String body = command.substring("TRANSITIONS".length()).trim();
+                    String body = command.substring(cmd.length()).trim();
                     String[] parts = body.split(",");
                     List<Transition> list = new ArrayList<>();
 
@@ -259,7 +273,7 @@ public class DeterministicFSM extends FSM {
                         String nextStateName = e[2];
 
                         if (!symbols.contains(symbol)) {
-                            printAndLog("Error: invalid symbol " + symbol);
+                            printAndLog("Error: invalid symbol A" + symbol);
                             hasError = true;
                         }
 
@@ -268,7 +282,7 @@ public class DeterministicFSM extends FSM {
                                 .findFirst()
                                 .orElse(null);
                         if (currentState == null) {
-                            printAndLog("Error: invalid state " + currentStateName);
+                            printAndLog("Error: invalid state B" + currentStateName);
                             hasError = true;
                         }
 
@@ -277,7 +291,7 @@ public class DeterministicFSM extends FSM {
                                 .findFirst()
                                 .orElse(null);
                         if (nextState == null) {
-                            printAndLog("Error: invalid state " + nextStateName);
+                            printAndLog("Error: invalid state C" + nextStateName);
                             hasError = true;
                         }
 
@@ -339,7 +353,7 @@ public class DeterministicFSM extends FSM {
                     states.clear();
                     transitions.clear();
                     finalStates.clear();
-                    initialState = null;
+                    //initialState = null;
                 }
                 case "LOAD" -> {
                     if (tokens.length >= 2)
