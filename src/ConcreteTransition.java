@@ -1,5 +1,7 @@
+import java.io.Serializable;
 import java.util.*;
-public class ConcreteTransition implements Transition{
+public class ConcreteTransition implements Transition, Serializable{
+    private static final long serialVersionUID = 1L;
     private final char symbol;
     private final State currentState;
     private final State nextState;

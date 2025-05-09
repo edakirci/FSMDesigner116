@@ -1,5 +1,8 @@
 import java.util.*;
-public abstract class FSM {
+import java.io.Serializable;
+public abstract class FSM implements Serializable{
+    private static final long serialVersionUID = 1L;
+
     protected List<State> states;
     protected Set<Character> symbols;
     protected State initialState;

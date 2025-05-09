@@ -1,4 +1,6 @@
-public class ConcreteState implements State{
+import java.io.Serializable;
+public class ConcreteState implements State, Serializable{
+    private static final long serialVersionUID = 1L;
     private final String name;
     public ConcreteState(String name) {
         this.name = name.toUpperCase();
