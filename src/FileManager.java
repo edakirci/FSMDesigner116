@@ -32,11 +32,9 @@ public class FileManager {
         }
     }
 
-    public void saveToBinary(FSM fsm, String filename) {
+    public void saveToBinary(FSM fsm, String filename) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
             oos.writeObject(fsm);
-        } catch (IOException e) {
-            System.out.println("Error: cannot serialize to " + filename);
         }
     }
 

@@ -3,7 +3,8 @@ import java.util.stream.Collectors;
 import java.io.*;
 
 public class DeterministicFSM extends FSM {
-    private final Logger logger = new Logger();
+    private static final long serialVersionUID = 1L;
+    private transient final Logger logger = new Logger();
 
     public DeterministicFSM() {
         states = new ArrayList<>();
@@ -117,7 +118,12 @@ public class DeterministicFSM extends FSM {
 
     @Override
     public void compile(String filename) {
-        new FileManager().saveToBinary(this, filename);
+        try {
+            new FileManager().saveToBinary(this, filename);
+            printAndLog("FSM compiled successfully to file: " + filename);
+        } catch (Exception e) {
+            printAndLog("Error compiling FSM: " + e.getMessage());
+        }
     }
 
     @Override
