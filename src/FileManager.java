@@ -1,6 +1,6 @@
 import java.io.*;
 public class FileManager {
-    public void loadFromText(DeterministicFSM fsm, String filename) {
+    public void loadFromText(DeterministicFSM fsm, String filename) throws IOException {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String line;
             int lineNum = 0;
@@ -10,8 +10,7 @@ public class FileManager {
                 lineNum++;
 
                 int idx = line.indexOf(';');
-                String content = (idx >= 0 ? line.substring(0, idx) : line).trim();
-
+                String content = (idx >= 0 ? line.substring(0, idx + 1) : line).trim(); // ✅ +1 eklenerek komutun tamamı alınır
 
                 if (content.isEmpty()) {
                     continue;
@@ -28,9 +27,10 @@ public class FileManager {
                 }
             }
         } catch (IOException e) {
-            System.out.println("Error: cannot open file " + filename);
+            throw new IOException("cannot open file " + filename);
         }
     }
+
 
     public void saveToBinary(FSM fsm, String filename) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
