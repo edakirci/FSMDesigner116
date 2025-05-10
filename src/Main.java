@@ -13,10 +13,12 @@ public class Main {
             return;
         }
 
-        String versionNo = VersionUtil.getVersion();
+        String versionNo = VersionUtil.getLatestGitTagVersion();
+
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter fmt = DateTimeFormatter
                 .ofPattern("MMMM d, yyyy, HH:mm", Locale.ENGLISH);
+
         System.out.println("FSM DESIGNER " + versionNo + " " + fmt.format(now));
 
         Scanner scanner = new Scanner(System.in);
@@ -29,7 +31,6 @@ public class Main {
 
             int idx = line.indexOf(';');
             String content = (idx >= 0 ? line.substring(0, idx) : line).trim();
-
 
             if (content.isEmpty()) {
                 System.out.print(prompt);
