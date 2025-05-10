@@ -98,7 +98,8 @@ public class DeterministicFSM extends FSM {
                 .map(State::getName)
                 .collect(Collectors.joining(", ")) + "]");
 
-        System.out.println("INITIAL STATE " + (initialState != null ? initialState.getName() : ""));
+        System.out.println("INITIAL STATE [" + (initialState != null ? initialState.getName() : "") + "]");
+
 
 
         System.out.println("FINAL STATES [" + finalStates.stream()
@@ -188,7 +189,8 @@ public class DeterministicFSM extends FSM {
                     if (tokens.length > 1) {
                         List<String> invalids = new ArrayList<>();
                         for (int i = 1; i < tokens.length; i++) {
-                            String tok = tokens[i];
+                            String tok = tokens[i].replaceAll(";+$", ""); // Noktalı virgül temizle
+
                             if (tok.length() != 1 || !Character.isLetterOrDigit(tok.charAt(0))) {
                                 invalids.add(tok);
                             } else {
@@ -207,9 +209,10 @@ public class DeterministicFSM extends FSM {
                         String list = symbols.stream()
                                 .map(String::valueOf)
                                 .collect(Collectors.joining(", "));
-                        printAndLog(list);
+                        printAndLog("SYMBOLS [" + list + "]");
                     }
                 }
+
                 case "STATES" -> {
                     if (tokens.length > 1) {
                         for (int i = 1; i < tokens.length; i++) {
@@ -266,7 +269,6 @@ public class DeterministicFSM extends FSM {
 
                     for (String p : parts) {
                         String[] e = p.trim().split("\\s+");
-
                         boolean hasError = false;
 
                         if (e.length < 3) {
@@ -274,9 +276,18 @@ public class DeterministicFSM extends FSM {
                             continue;
                         }
 
-                        char symbol = Character.toUpperCase(e[0].charAt(0));
-                        String currentStateName = e[1];
-                        String nextStateName = e[2];
+                        
+                        String symbolStr = e[0].replaceAll(";+$", "");
+                        String currentStateName = e[1].replaceAll(";+$", "");
+                        String nextStateName = e[2].replaceAll(";+$", "");
+
+
+                        if (symbolStr.length() != 1 || !Character.isLetterOrDigit(symbolStr.charAt(0))) {
+                            printAndLog("Error: invalid symbol format → \"" + symbolStr + "\"");
+                            hasError = true;
+                        }
+
+                        char symbol = Character.toUpperCase(symbolStr.charAt(0));
 
                         if (!symbols.contains(symbol)) {
                             printAndLog("Error: invalid symbol A" + symbol);
@@ -302,8 +313,10 @@ public class DeterministicFSM extends FSM {
                         }
 
                         boolean alreadyExists = transitions.stream().anyMatch(t ->
-                                t.getSymbol() == symbol && t.getCurrentState().equals(currentState) &&
+                                t.getSymbol() == symbol &&
+                                        t.getCurrentState().equals(currentState) &&
                                         !t.getNextState().equals(nextState));
+
                         if (!hasError && alreadyExists) {
                             printAndLog("Warning: transition already exists for <" + symbol + "," + currentStateName + ">, overridden.");
                         }
@@ -315,6 +328,8 @@ public class DeterministicFSM extends FSM {
 
                     addTransitions(list);
                 }
+
+
 
                 case "PRINT" -> {
                     if (tokens.length >= 2) {
@@ -359,7 +374,7 @@ public class DeterministicFSM extends FSM {
                     states.clear();
                     transitions.clear();
                     finalStates.clear();
-                    //initialState = null;
+                    initialState = null;
                 }
                 case "LOAD" -> {
                     if (tokens.length >= 2)
