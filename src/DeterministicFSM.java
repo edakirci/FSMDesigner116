@@ -216,13 +216,10 @@ public class DeterministicFSM extends FSM {
 
                 case "STATES" -> {
                     if (tokens.length > 1) {
-                        // Yeni state ekleme modu
                         for (int i = 1; i < tokens.length; i++) {
-                            // sondaki ',' veya ';' kırp
                             String tok = tokens[i].replaceAll("[,;]+$", "").trim();
                             if (tok.isEmpty()) continue;
 
-                            // yalnızca alfanümerik dizi kabul et
                             if (!tok.matches("[A-Za-z0-9]+")) {
                                 printAndLog("Error: invalid state " + tok);
                                 continue;
@@ -238,7 +235,7 @@ public class DeterministicFSM extends FSM {
                             }
                         }
                     } else {
-                        // Listeleme modu: yalnızca geçerli state’ler, tek virgül + boşluk
+
                         String list = states.stream()
                                 .map(State::getName)
                                 .collect(Collectors.joining(", "));
@@ -250,10 +247,8 @@ public class DeterministicFSM extends FSM {
 
                 case "INITIAL-STATE" -> {
                     if (tokens.length >= 2) {
-                        // sondaki ';' veya ',' karakterlerini kaldır
                         String tok = tokens[1].replaceAll("[,;]+$", "").trim();
 
-                        // mutlaka tamamen alfanümerik olmalı
                         if (!tok.matches("[A-Za-z0-9]+")) {
                             printAndLog("Error: invalid state " + tok);
                         } else {
@@ -263,7 +258,6 @@ public class DeterministicFSM extends FSM {
                             if (!existed) {
                                 printAndLog("Warning: " + upper + " was not previously declared as a state");
                             }
-                            // geçerli ve temiz isimle initialState'i güncelle
                             setInitialState(upper);
                         }
                     } else {
@@ -274,10 +268,8 @@ public class DeterministicFSM extends FSM {
                 case "FINAL-STATES" -> {
                     if (tokens.length >= 2) {
                         for (int i = 1; i < tokens.length; i++) {
-                            // sondaki ',' veya ';' karakterlerini kaldır
                             String tok = tokens[i].replaceAll("[,;]+$", "").trim();
 
-                            // yalnızca tamamen alfanümerik dizgeler kabul edilecek
                             if (!tok.matches("[A-Za-z0-9]+")) {
                                 printAndLog("Error: invalid state " + tok);
                                 continue;
@@ -285,7 +277,6 @@ public class DeterministicFSM extends FSM {
 
                             String upper = tok.toUpperCase();
 
-                            // Eğer daha önce tüm states içinde yoksa, uyar ve ekle
                             boolean existedInStates = states.stream()
                                     .anyMatch(s -> s.getName().equalsIgnoreCase(upper));
                             if (!existedInStates) {
@@ -293,7 +284,7 @@ public class DeterministicFSM extends FSM {
                                 addStates(Collections.singletonList(upper));
                             }
 
-                            // Şimdi finalStates içinde zaten varsa uyar, yoksa ekle
+
                             State st = states.stream()
                                     .filter(s -> s.getName().equalsIgnoreCase(upper))
                                     .findFirst().orElseThrow();
@@ -414,16 +405,13 @@ public class DeterministicFSM extends FSM {
                     if (tokens.length >= 2) {
                         String filename = tokens[1].replaceAll(";+$", "");
 
-                        // 1) Geçerli uzantı mı? Yalnızca .fsm veya .bin
                         if (!filename.matches("^[A-Za-z0-9._-]+\\.(fsm|bin)$")) {
                             printAndLog("Error: invalid filename " + filename);
                         } else {
-                            // 2) Dosyayı yazmayı dene
                             try {
                                 new FileManager().saveToBinary(this, filename);
                                 printAndLog("FSM compiled successfully to file: " + filename);
                             } catch (IOException e) {
-                                // dosya oluşturulamıyorsa anlamlı mesaj
                                 printAndLog("Error: cannot create or override file "
                                         + filename + " – The system cannot find the path specified");
                             }
@@ -434,7 +422,6 @@ public class DeterministicFSM extends FSM {
                 }
 
                 case "CLEAR" -> {
-                    // If any extra tokens accompany CLEAR, it's an error
                     if (tokens.length > 1) {
                         printAndLog("Error: CLEAR does not take any arguments");
                     } else {

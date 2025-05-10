@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="FSMDesigner116:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/FSMDesigner116_jar</output-path>
+    <root id="archive" name="FSMDesigner116.jar">
+      <element id="module-output" name="FSMDesigner116" />
+    </root>
+  </artifact>
+</component>
