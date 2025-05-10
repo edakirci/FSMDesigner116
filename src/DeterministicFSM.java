@@ -100,8 +100,6 @@ public class DeterministicFSM extends FSM {
 
         System.out.println("INITIAL STATE [" + (initialState != null ? initialState.getName() : "") + "]");
 
-
-
         System.out.println("FINAL STATES [" + finalStates.stream()
                 .map(State::getName)
                 .collect(Collectors.joining(", ")) + "]");
@@ -189,14 +187,13 @@ public class DeterministicFSM extends FSM {
                     if (tokens.length > 1) {
                         List<String> invalids = new ArrayList<>();
                         for (int i = 1; i < tokens.length; i++) {
-                            String tok = tokens[i].replaceAll(";+$", ""); // Noktalı virgül temizle
-
+                            String tok = tokens[i].replaceAll(";+$", "");
                             if (tok.length() != 1 || !Character.isLetterOrDigit(tok.charAt(0))) {
                                 invalids.add(tok);
                             } else {
                                 char c = Character.toUpperCase(tok.charAt(0));
                                 if (symbols.contains(c)) {
-                                    printAndLog("Warning " + tok + " was already declared as a symbol");
+                                    printAndLog("Warning: " + tok + " was already declared as a symbol");
                                 } else {
                                     symbols.add(c);
                                 }
@@ -209,7 +206,7 @@ public class DeterministicFSM extends FSM {
                         String list = symbols.stream()
                                 .map(String::valueOf)
                                 .collect(Collectors.joining(", "));
-                        printAndLog("SYMBOLS [" + list + "]");
+                        printAndLog(list);
                     }
                 }
 
@@ -264,72 +261,72 @@ public class DeterministicFSM extends FSM {
                 }
                 case "TRANSITIONS" -> {
                     String body = command.substring(cmd.length()).trim();
+
+                    if (body.endsWith(";")) {
+                        body = body.substring(0, body.length() - 1).trim();
+                    }
+                    if (body.isEmpty()) break;
+
                     String[] parts = body.split(",");
                     List<Transition> list = new ArrayList<>();
 
-                    for (String p : parts) {
-                        String[] e = p.trim().split("\\s+");
-                        boolean hasError = false;
+                    for (String part : parts) {
+                        String raw = part.trim();
+                        if (raw.isEmpty()) continue;
+
+                        String[] e = raw.replaceAll(";+$", "").split("\\s+");
 
                         if (e.length < 3) {
-                            printAndLog("Line " + lineNum + ": invalid transition format → \"" + p.trim() + "\"");
+                            printAndLog("Line " + lineNum + ": invalid transition format → \"" + raw + "\"");
+                            continue;
+                        } else if (e.length > 3) {
+                            printAndLog("Error: comma or semicolon expected");
                             continue;
                         }
 
-                        
-                        String symbolStr = e[0].replaceAll(";+$", "");
-                        String currentStateName = e[1].replaceAll(";+$", "");
-                        String nextStateName = e[2].replaceAll(";+$", "");
+                        String symTok = e[0].trim();
+                        String curTok = e[1].trim();
+                        String nxtTok = e[2].trim();
 
-
-                        if (symbolStr.length() != 1 || !Character.isLetterOrDigit(symbolStr.charAt(0))) {
-                            printAndLog("Error: invalid symbol format → \"" + symbolStr + "\"");
-                            hasError = true;
+                        if (symTok.length() != 1 || !Character.isLetterOrDigit(symTok.charAt(0))) {
+                            printAndLog("Error: invalid symbol format → \"" + symTok + "\"");
+                            continue;
                         }
-
-                        char symbol = Character.toUpperCase(symbolStr.charAt(0));
-
+                        char symbol = Character.toUpperCase(symTok.charAt(0));
                         if (!symbols.contains(symbol)) {
-                            printAndLog("Error: invalid symbol A" + symbol);
-                            hasError = true;
+                            printAndLog("Error: invalid symbol " + symbol);
+                            continue;
                         }
 
-                        State currentState = states.stream()
-                                .filter(s -> s.getName().equalsIgnoreCase(currentStateName))
-                                .findFirst()
-                                .orElse(null);
-                        if (currentState == null) {
-                            printAndLog("Error: invalid state B" + currentStateName);
-                            hasError = true;
+                        State curState = states.stream()
+                                .filter(s -> s.getName().equalsIgnoreCase(curTok)).findFirst().orElse(null);
+                        if (curState == null) {
+                            printAndLog("Error: invalid state " + curTok);
+                            continue;
+                        }
+                        State nxtState = states.stream()
+                                .filter(s -> s.getName().equalsIgnoreCase(nxtTok)).findFirst().orElse(null);
+                        if (nxtState == null) {
+                            printAndLog("Error: invalid state " + nxtTok);
+                            continue;
                         }
 
-                        State nextState = states.stream()
-                                .filter(s -> s.getName().equalsIgnoreCase(nextStateName))
-                                .findFirst()
-                                .orElse(null);
-                        if (nextState == null) {
-                            printAndLog("Error: invalid state C" + nextStateName);
-                            hasError = true;
+                        Iterator<Transition> it = transitions.iterator();
+                        while (it.hasNext()) {
+                            Transition old = it.next();
+                            if (old.getSymbol() == symbol && old.getCurrentState().equals(curState)) {
+                                printAndLog(old.getNextState().equals(nxtState)
+                                        ? "Warning: transition <" + symbol + "," + curTok + "> already exists with same target."
+                                        : "Warning: transition already exists for <" + symbol + "," + curTok + ">, overridden.");
+                                it.remove();
+                                break;
+                            }
                         }
-
-                        boolean alreadyExists = transitions.stream().anyMatch(t ->
-                                t.getSymbol() == symbol &&
-                                        t.getCurrentState().equals(currentState) &&
-                                        !t.getNextState().equals(nextState));
-
-                        if (!hasError && alreadyExists) {
-                            printAndLog("Warning: transition already exists for <" + symbol + "," + currentStateName + ">, overridden.");
-                        }
-
-                        if (!hasError && currentState != null && nextState != null) {
-                            list.add(new ConcreteTransition(symbol, currentState, nextState));
-                        }
+                        list.add(new ConcreteTransition(symbol, curState, nxtState));
                     }
 
                     addTransitions(list);
                 }
-
-
 
                 case "PRINT" -> {
                     if (tokens.length >= 2) {
