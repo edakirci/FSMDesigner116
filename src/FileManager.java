@@ -10,7 +10,7 @@ public class FileManager {
                 lineNum++;
 
                 int idx = line.indexOf(';');
-                String content = (idx >= 0 ? line.substring(0, idx + 1) : line).trim(); // ✅ +1 eklenerek komutun tamamı alınır
+                String content = (idx >= 0 ? line.substring(0, idx + 1) : line).trim();
 
                 if (content.isEmpty()) {
                     continue;

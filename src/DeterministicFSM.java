@@ -187,13 +187,14 @@ public class DeterministicFSM extends FSM {
                     if (tokens.length > 1) {
                         List<String> invalids = new ArrayList<>();
                         for (int i = 1; i < tokens.length; i++) {
-                            String tok = tokens[i].replaceAll(";+$", "");
+                            String tok = tokens[i].replaceAll(";+$", ""); // Noktalı virgül temizle
+
                             if (tok.length() != 1 || !Character.isLetterOrDigit(tok.charAt(0))) {
                                 invalids.add(tok);
                             } else {
                                 char c = Character.toUpperCase(tok.charAt(0));
                                 if (symbols.contains(c)) {
-                                    printAndLog("Warning: " + tok + " was already declared as a symbol");
+                                    printAndLog("Warning " + tok + " was already declared as a symbol");
                                 } else {
                                     symbols.add(c);
                                 }
@@ -206,59 +207,108 @@ public class DeterministicFSM extends FSM {
                         String list = symbols.stream()
                                 .map(String::valueOf)
                                 .collect(Collectors.joining(", "));
-                        printAndLog(list);
+                        printAndLog("SYMBOLS [" + list + "]");
                     }
                 }
 
+
+
+
                 case "STATES" -> {
                     if (tokens.length > 1) {
+                        // Yeni state ekleme modu
                         for (int i = 1; i < tokens.length; i++) {
-                            String name = tokens[i].replaceAll(";+$", "");
+                            // sondaki ',' veya ';' kırp
+                            String tok = tokens[i].replaceAll("[,;]+$", "").trim();
+                            if (tok.isEmpty()) continue;
+
+                            // yalnızca alfanümerik dizi kabul et
+                            if (!tok.matches("[A-Za-z0-9]+")) {
+                                printAndLog("Error: invalid state " + tok);
+                                continue;
+                            }
+
+                            String upper = tok.toUpperCase();
                             boolean exists = states.stream()
-                                    .anyMatch(s -> s.getName().equalsIgnoreCase(name));
+                                    .anyMatch(s -> s.getName().equalsIgnoreCase(upper));
                             if (exists) {
-                                printAndLog("Warning: " + name.toUpperCase() + " was already declared as a state");
+                                printAndLog("Warning: " + upper + " was already declared as a state");
                             } else {
-                                addStates(Collections.singletonList(name));
+                                addStates(Collections.singletonList(tok));
                             }
                         }
                     } else {
+                        // Listeleme modu: yalnızca geçerli state’ler, tek virgül + boşluk
                         String list = states.stream()
                                 .map(State::getName)
                                 .collect(Collectors.joining(", "));
                         printAndLog(list);
                     }
                 }
+
+
+
                 case "INITIAL-STATE" -> {
                     if (tokens.length >= 2) {
-                        String name = tokens[1].replaceAll(";+$", "");
-                        boolean existed = states.stream()
-                                .anyMatch(s -> s.getName().equalsIgnoreCase(name));
-                        if (!existed) {
-                            printAndLog("Warning: " + name.toUpperCase() + " was not previously declared as a state");
+                        // sondaki ';' veya ',' karakterlerini kaldır
+                        String tok = tokens[1].replaceAll("[,;]+$", "").trim();
+
+                        // mutlaka tamamen alfanümerik olmalı
+                        if (!tok.matches("[A-Za-z0-9]+")) {
+                            printAndLog("Error: invalid state " + tok);
+                        } else {
+                            String upper = tok.toUpperCase();
+                            boolean existed = states.stream()
+                                    .anyMatch(s -> s.getName().equalsIgnoreCase(upper));
+                            if (!existed) {
+                                printAndLog("Warning: " + upper + " was not previously declared as a state");
+                            }
+                            // geçerli ve temiz isimle initialState'i güncelle
+                            setInitialState(upper);
                         }
-                        setInitialState(name);
                     } else {
                         printAndLog("Error: INITIAL-STATE requires a state name");
                     }
                 }
+
                 case "FINAL-STATES" -> {
                     if (tokens.length >= 2) {
-                        List<String> names = new ArrayList<>();
                         for (int i = 1; i < tokens.length; i++) {
-                            String name = tokens[i].replaceAll(";+$", "");
-                            boolean existed = states.stream()
-                                    .anyMatch(s -> s.getName().equalsIgnoreCase(name));
-                            if (!existed) {
-                                printAndLog("Warning: " + name.toUpperCase() + " was not previously declared as a state");
+                            // sondaki ',' veya ';' karakterlerini kaldır
+                            String tok = tokens[i].replaceAll("[,;]+$", "").trim();
+
+                            // yalnızca tamamen alfanümerik dizgeler kabul edilecek
+                            if (!tok.matches("[A-Za-z0-9]+")) {
+                                printAndLog("Error: invalid state " + tok);
+                                continue;
                             }
-                            names.add(name);
+
+                            String upper = tok.toUpperCase();
+
+                            // Eğer daha önce tüm states içinde yoksa, uyar ve ekle
+                            boolean existedInStates = states.stream()
+                                    .anyMatch(s -> s.getName().equalsIgnoreCase(upper));
+                            if (!existedInStates) {
+                                printAndLog("Warning: " + upper + " was not previously declared as a state");
+                                addStates(Collections.singletonList(upper));
+                            }
+
+                            // Şimdi finalStates içinde zaten varsa uyar, yoksa ekle
+                            State st = states.stream()
+                                    .filter(s -> s.getName().equalsIgnoreCase(upper))
+                                    .findFirst().orElseThrow();
+                            if (finalStates.contains(st)) {
+                                printAndLog("Warning: " + upper + " was already declared as a final state");
+                            } else {
+                                finalStates.add(st);
+                            }
                         }
-                        addFinalStates(names);
                     } else {
-                        printAndLog("Error: FINAL-STATES requires at least one state");
+                        printAndLog("Error: FINAL-STATES requires at least one state name");
                     }
                 }
+
+
                 case "TRANSITIONS" -> {
                     String body = command.substring(cmd.length()).trim();
 
@@ -361,18 +411,41 @@ public class DeterministicFSM extends FSM {
                         printAndLog("Error: EXECUTE requires an input string");
                 }
                 case "COMPILE" -> {
-                    if (tokens.length >= 2)
-                        compile(tokens[1]);
-                    else
+                    if (tokens.length >= 2) {
+                        String filename = tokens[1].replaceAll(";+$", "");
+
+                        // 1) Geçerli uzantı mı? Yalnızca .fsm veya .bin
+                        if (!filename.matches("^[A-Za-z0-9._-]+\\.(fsm|bin)$")) {
+                            printAndLog("Error: invalid filename " + filename);
+                        } else {
+                            // 2) Dosyayı yazmayı dene
+                            try {
+                                new FileManager().saveToBinary(this, filename);
+                                printAndLog("FSM compiled successfully to file: " + filename);
+                            } catch (IOException e) {
+                                // dosya oluşturulamıyorsa anlamlı mesaj
+                                printAndLog("Error: cannot create or override file "
+                                        + filename + " – The system cannot find the path specified");
+                            }
+                        }
+                    } else {
                         printAndLog("Error: COMPILE requires a filename");
+                    }
                 }
+
                 case "CLEAR" -> {
-                    symbols.clear();
-                    states.clear();
-                    transitions.clear();
-                    finalStates.clear();
-                    initialState = null;
+                    // If any extra tokens accompany CLEAR, it's an error
+                    if (tokens.length > 1) {
+                        printAndLog("Error: CLEAR does not take any arguments");
+                    } else {
+                        symbols.clear();
+                        states.clear();
+                        transitions.clear();
+                        finalStates.clear();
+                        initialState = null;
+                    }
                 }
+
                 case "LOAD" -> {
                     if (tokens.length >= 2)
                         load(tokens[1]);
