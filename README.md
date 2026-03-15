@@ -111,8 +111,9 @@ java -jar fsm.jar commands.txt
 ## EXIT
 ---
 # Application Screenshots
-## Main Screen
-![Main Screen](screenshots/main.png)
+## Output
+![Main Screen](screenshots/main1.png)
+![Main Screen](screenshots/main2.png)
 ---
 # Course Information
 
