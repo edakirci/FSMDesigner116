@@ -53,7 +53,7 @@ During execution, the FSM reads the input string from **left to right** and upda
 # Example Execution
 
 ## Example command session:
-###? SYMBOLS 0 1 2 3;
+### ? SYMBOLS 0 1 2 3;
 ### ? INITIAL-STATE Q0;
 ### ? FINAL-STATES Q2;
 ### ? STATES Q1;
@@ -61,18 +61,18 @@ During execution, the FSM reads the input string from **left to right** and upda
 ### ? PRINT;
 ### ? EXECUTE 123;
 
-# Output example:
+## Output example:
 Q0 Q1 Q0 Q0 NO
 
 ---
 
 # Project Structure
 
-FSMDesigner
-│
-├── src/ # application source code
-├── .gitignore
-└── README.md
+## FSMDesigner
+## │
+## ├── src/ # application source code
+## ├── .gitignore
+## └── README.md
 
 ---
 
