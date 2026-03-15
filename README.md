@@ -53,26 +53,16 @@ During execution, the FSM reads the input string from **left to right** and upda
 # Example Execution
 
 ## Example command session:
-### ? SYMBOLS 0 1 2 3;
-### ? INITIAL-STATE Q0;
-### ? FINAL-STATES Q2;
-### ? STATES Q1;
-### ? TRANSITIONS 0 Q0 Q0, 1 Q0 Q1;
-### ? PRINT;
-### ? EXECUTE 123;
+- ? SYMBOLS 0 1 2 3;
+- ? INITIAL-STATE Q0;
+- ? FINAL-STATES Q2;
+- ? STATES Q1;
+- ? TRANSITIONS 0 Q0 Q0, 1 Q0 Q1;
+- ? PRINT;
+- ? EXECUTE 123;
 
 ## Output example:
-Q0 Q1 Q0 Q0 NO
-
----
-
-# Project Structure
-
-## FSMDesigner
-## │
-## ├── src/ # application source code
-## ├── .gitignore
-## └── README.md
+- Q0 Q1 Q0 Q0 NO
 
 ---
 
@@ -98,17 +88,17 @@ java -jar fsm.jar commands.txt
 ---
 
 # Example Commands
-## SYMBOLS
-## STATES
-## INITIAL-STATE
-## FINAL-STATES
-## TRANSITIONS
-## PRINT
-## EXECUTE
-## LOAD
-## COMPILE
-## CLEAR
-## EXIT
+- SYMBOLS
+- STATES
+- INITIAL-STATE
+- FINAL-STATES
+- TRANSITIONS
+- PRINT
+- EXECUTE
+- LOAD
+- COMPILE
+- CLEAR
+- EXIT
 ---
 # Application Screenshots
 ## Output
@@ -117,12 +107,7 @@ java -jar fsm.jar commands.txt
 ---
 # Course Information
 
-## Course: SE116 – Introduction to Programmıng II
-## Semester: Spring 2025
+**Course:** SE116 – Introduction to Programmıng II
+**Semester:** Spring 2024-2025
 
-
-
-
-
-
-
+---
