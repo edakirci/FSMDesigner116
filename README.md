@@ -108,6 +108,7 @@ java -jar fsm.jar commands.txt
 # Course Information
 
 **Course:** SE116 – Introduction to Programmıng II
+
 **Semester:** Spring 2024-2025
 
----
+
