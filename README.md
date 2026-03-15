@@ -71,7 +71,7 @@ During execution, the FSM reads the input string from **left to right** and upda
 1. Clone the repository
 
 ```bash
-git clone https://github.com/edakirci/FSMDesigner.git
+git clone https://github.com/edakirci/FSMDesigner116.git
 ```
 2. Compile the program
 ```bash
